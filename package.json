@@ -1,0 +1,14 @@
+
+{
+  "name": "render-notes-app",
+  "version": "1.0.0",
+  "description": "My first dynamic website hosted on Render",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
+

@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Personal Notes</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 30px 15px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2563eb;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        .form, .note {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px #0000000d;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 15px;
+        }
+
+        button {
+            border: none;
+            padding: 11px 17px;
+            border-radius: 7px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .add-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .note {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .note p {
+            overflow-wrap: anywhere;
+        }
+
+        #message {
+            text-align: center;
+            color: #16a34a;
+        }
+
+        .empty {
+            text-align: center;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>My Personal Notes</h1>
+
+    <p class="subtitle">
+        Create, manage and save your daily notes
+    </p>
+
+    <div class="form">
+
+        <h3>Add a New Note</h3>
+
+        <textarea
+            id="noteInput"
+            rows="4"
+            placeholder="Write your note here..."
+        ></textarea>
+
+        <button class="add-btn" onclick="addNote()">
+            + Add Note
+        </button>
+
+    </div>
+
+    <p id="message"></p>
+
+    <h2>My Saved Notes</h2>
+
+    <div id="notesList"></div>
+
+</div>
+
+<script>
+
+    const noteInput = document.getElementById("noteInput");
+    const notesList = document.getElementById("notesList");
+    const message = document.getElementById("message");
+
+    // Display all notes
+    async function loadNotes() {
+
+        try {
+
+            const response = await fetch("/api/notes");
+
+            if (!response.ok) {
+                throw new Error("Could not load notes");
+            }
+
+            const notes = await response.json();
+
+            notesList.innerHTML = "";
+
+            if (notes.length === 0) {
+                notesList.innerHTML =
+                    '<p class="empty">No notes added yet.</p>';
+                return;
+            }
+
+            notes.forEach(note => {
+
+                const card = document.createElement("div");
+                card.className = "note";
+
+                const content = document.createElement("p");
+                content.textContent = note.text;
+
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "delete-btn";
+                deleteButton.textContent = "Delete";
+
+                deleteButton.onclick = () => deleteNote(note.id);
+
+                card.appendChild(content);
+                card.appendChild(deleteButton);
+
+                notesList.appendChild(card);
+
+            });
+
+        } catch (error) {
+
+            message.textContent = error.message;
+
+        }
+    }
+
+    // Add a new note
+    async function addNote() {
+
+        const text = noteInput.value.trim();
+
+        if (!text) {
+            message.textContent = "Please enter a note!";
+            return;
+        }
+
+        try {
+
+            const response = await fetch("/api/notes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ text })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message);
+            }
+
+            noteInput.value = "";
+            message.textContent = "Note added successfully!";
+
+            await loadNotes();
+
+        } catch (error) {
+
+            message.textContent = error.message;
+
+        }
+    }
+
+    // Delete a note
+    async function deleteNote(id) {
+
+        try {
+
+            const response = await fetch(`/api/notes/${id}`, {
+                method: "DELETE"
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message);
+            }
+
+            message.textContent = "Note deleted successfully!";
+
+            await loadNotes();
+
+        } catch (error) {
+
+            message.textContent = error.message;
+
+        }
+    }
+
+    // Load notes when website opens
+    loadNotes();
+
+</script>
+
+</body>
+</html>
